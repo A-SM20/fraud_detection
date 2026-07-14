@@ -88,6 +88,13 @@ services:
           name: fraud-postgres
           property: database
 
+  # ─── Redis Cache (Free Tier) ────────────────────────────
+  - type: redis
+    name: fraud-redis
+    plan: free
+    region: ohio
+    maxmemoryPolicy: allkeys-lru
+
 databases:
   # ─── PostgreSQL Database (Free for 90 Days) ─────────────
   - name: fraud-postgres
@@ -95,10 +102,3 @@ databases:
     region: ohio
     databaseName: fraud_pipeline
     user: fraud_user
-
-  # ─── Redis Cache (Free Tier) ────────────────────────────
-  - type: redis
-    name: fraud-redis
-    plan: free
-    region: ohio
-    maxmemoryPolicy: allkeys-lru
