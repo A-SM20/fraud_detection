@@ -14,7 +14,7 @@ function setStoredUser(u) { localStorage.setItem('fraud_user', JSON.stringify(u)
 /* ═══════════════════════════════════════════════════════
    API Helpers (with JWT)
    ═══════════════════════════════════════════════════════ */
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/api` : '/api';
 
 async function fetchJSON(path) {
   const headers = {};
