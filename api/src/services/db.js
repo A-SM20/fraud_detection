@@ -11,6 +11,20 @@ const pool = new Pool({
   connectionTimeoutMillis: 5000,
 });
 
+const fs = require('fs');
+const path = require('path');
+
+async function initDb() {
+  try {
+    const migrationPath = path.resolve(__dirname, '../../../db/migrations/001_initial_schema.sql');
+    const sql = fs.readFileSync(migrationPath, 'utf8');
+    await pool.query(sql);
+    console.log('[Postgres] Initial schema verified/applied successfully');
+  } catch (err) {
+    console.error('[Postgres] Failed to apply schema migration:', err.message);
+  }
+}
+
 pool.on('connect', () => {
   console.log('[Postgres] Client connected');
 });
@@ -19,4 +33,4 @@ pool.on('error', (err) => {
   console.error('[Postgres] Unexpected error:', err.message);
 });
 
-module.exports = { pool };
+module.exports = { pool, initDb };

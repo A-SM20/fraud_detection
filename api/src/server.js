@@ -9,7 +9,7 @@ const { v4: uuidv4 } = require('uuid');
 // Services
 const logger = require('./services/logger');
 const { redis, getPendingDepth, getReviewDepth } = require('./services/redis');
-const { pool } = require('./services/db');
+const { pool, initDb } = require('./services/db');
 const { register, metricsMiddleware, queueDepth } = require('./services/metrics');
 
 // Routes
@@ -163,16 +163,10 @@ app.use((err, req, res, _next) => {
 
 // ─── Start ───────────────────────────────────────────────
 if (process.env.NODE_ENV !== 'test') {
-  app.listen(PORT, '0.0.0.0', () => {
-    logger.info('Server started', {
-      port: PORT,
-      env: process.env.NODE_ENV || 'development',
-      auth: process.env.SKIP_AUTH === 'true' ? 'disabled' : 'enabled',
+  initDb().then(() => {
+    app.listen(PORT, () => {
+      logger.info(`API Server running on port ${PORT}`, { service: 'fraud-api', version: 'v1.0.0' });
     });
-    console.log(`\n🚀 Fraud Pipeline API running on port ${PORT}`);
-    console.log(`   Health:  http://localhost:${PORT}/health`);
-    console.log(`   Metrics: http://localhost:${PORT}/metrics`);
-    console.log(`   API:     http://localhost:${PORT}/api/transactions\n`);
   });
 }
 
