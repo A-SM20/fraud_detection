@@ -1,0 +1,104 @@
+# Render Blueprint for the Fraud Detection Pipeline (Free Tier Optimized)
+# This will deploy PostgreSQL, Redis, the Node.js API, and the Python Worker.
+
+services:
+  # ─── Node.js Ingest API ─────────────────────────────────
+  - type: web
+    name: fraud-api
+    env: docker
+    dockerContext: ./api
+    dockerfilePath: ./api/Dockerfile
+    plan: free
+    region: ohio
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: SKIP_AUTH
+        value: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: API_KEYS
+        generateValue: true
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: fraud-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: fraud-redis
+          property: port
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: fraud-postgres
+          property: host
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: fraud-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: fraud-postgres
+          property: password
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: fraud-postgres
+          property: database
+      # Note: After deploying Frontend to Vercel, update this CORS origin!
+      - key: CORS_ORIGIN
+        value: "*"
+
+  # ─── Python Scoring Worker ──────────────────────────────
+  # NOTE: Deployed as a 'web' service instead of 'worker' to use the Free plan.
+  # Render allows this because our Python worker binds to port 8000 for Prometheus metrics!
+  - type: web
+    name: fraud-worker
+    env: docker
+    dockerContext: ./worker
+    dockerfilePath: ./worker/Dockerfile
+    plan: free
+    region: ohio
+    envVars:
+      - key: REDIS_HOST
+        fromService:
+          type: redis
+          name: fraud-redis
+          property: host
+      - key: REDIS_PORT
+        fromService:
+          type: redis
+          name: fraud-redis
+          property: port
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: fraud-postgres
+          property: host
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: fraud-postgres
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: fraud-postgres
+          property: password
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: fraud-postgres
+          property: database
+
+databases:
+  # ─── PostgreSQL Database (Free for 90 Days) ─────────────
+  - name: fraud-postgres
+    plan: free
+    region: ohio
+    databaseName: fraud_pipeline
+    user: fraud_user
+
+  # ─── Redis Cache (Free Tier) ────────────────────────────
+  - type: redis
+    name: fraud-redis
+    plan: free
+    region: ohio
+    maxmemoryPolicy: allkeys-lru
