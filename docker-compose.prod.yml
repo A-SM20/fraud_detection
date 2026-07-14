@@ -1,0 +1,61 @@
+# Production Docker Compose
+# Usage: docker-compose -f docker-compose.yml -f docker-compose.prod.yml up -d
+#
+# Overrides the dev compose with production settings:
+# - Auth enabled (SKIP_AUTH=false)
+# - Stricter CORS
+# - Production logging
+# - Dashboard serves built static files
+
+version: '3.8'
+
+services:
+  api:
+    environment:
+      - NODE_ENV=production
+      - SKIP_AUTH=false
+      - JWT_SECRET=${JWT_SECRET:?JWT_SECRET must be set in production}
+      - API_KEYS=${API_KEYS:?API_KEYS must be set in production}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3001}
+      - LOG_LEVEL=info
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+
+  worker:
+    environment:
+      - LOG_LEVEL=INFO
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 1G
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 5
+
+  postgres:
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD must be set in production}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    deploy:
+      resources:
+        limits:
+          cpus: '2.0'
+          memory: 2G
+
+  redis:
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 512M

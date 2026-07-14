@@ -1,0 +1,98 @@
+version: '3.8'
+
+services:
+  # ─── Redis ──────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+    restart: unless-stopped
+
+  # ─── PostgreSQL ─────────────────────────────────────────
+  postgres:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-fraud_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-fraud_pass_dev}
+      POSTGRES_DB: ${POSTGRES_DB:-fraud_pipeline}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db/migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-fraud_user}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # ─── Express Ingest API ─────────────────────────────────
+  api:
+    build: ./api
+    ports:
+      - "3000:3000"
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-fraud_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-fraud_pass_dev}
+      - POSTGRES_DB=${POSTGRES_DB:-fraud_pipeline}
+      - API_PORT=3000
+      - NODE_ENV=development
+      - SKIP_AUTH=${SKIP_AUTH:-true}
+      - JWT_SECRET=${JWT_SECRET:-fraud-pipeline-dev-secret-change-in-production}
+      - API_KEYS=${API_KEYS:-dev-api-key-1,dev-api-key-2}
+      - LOG_LEVEL=${LOG_LEVEL:-info}
+      - CORS_ORIGIN=${CORS_ORIGIN:-*}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─── Python Scoring Worker ─────────────────────────────
+  worker:
+    build: ./worker
+    environment:
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - POSTGRES_HOST=postgres
+      - POSTGRES_PORT=5432
+      - POSTGRES_USER=${POSTGRES_USER:-fraud_user}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-fraud_pass_dev}
+      - POSTGRES_DB=${POSTGRES_DB:-fraud_pipeline}
+      - SCORING_THRESHOLD=${SCORING_THRESHOLD:-0.35}
+      - MODEL_VERSION=${MODEL_VERSION:-v1.0.0}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+    depends_on:
+      redis:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # ─── Review Dashboard ──────────────────────────────────
+  dashboard:
+    build: ./dashboard
+    ports:
+      - "3001:3001"
+    environment:
+      - VITE_API_URL=http://api:3000
+    depends_on:
+      - api
+    restart: unless-stopped
+
+volumes:
+  redis_data:
+  postgres_data:
