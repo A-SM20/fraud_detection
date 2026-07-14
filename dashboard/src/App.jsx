@@ -466,10 +466,6 @@ export default function App() {
   const [loading, setLoading] = useState(true);
   const pageSize = PAGE_SIZE;
 
-  // If not logged in, show login screen
-  if (!user && !getToken()) {
-    return <LoginScreen onLogin={setUser} />;
-  }
 
   const handleLogout = () => {
     clearToken();
@@ -520,10 +516,12 @@ export default function App() {
 
   // Initial load + polling
   useEffect(() => {
+    if (!getToken()) return;
     loadStats();
     loadTransactions();
     checkHealth();
     const interval = setInterval(() => {
+      if (!getToken()) return;
       loadStats();
       loadTransactions();
       checkHealth();
@@ -535,6 +533,11 @@ export default function App() {
   useEffect(() => {
     setPage(0);
   }, [statusFilter]);
+
+  // If not logged in, show login screen
+  if (!user && !getToken()) {
+    return <LoginScreen onLogin={setUser} />;
+  }
 
   const totalPages = Math.ceil(totalTxns / pageSize);
 
