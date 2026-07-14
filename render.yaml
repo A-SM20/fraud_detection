@@ -94,6 +94,7 @@ services:
     plan: free
     region: ohio
     maxmemoryPolicy: allkeys-lru
+    ipAllowList: []
 
 databases:
   # ─── PostgreSQL Database (Free for 90 Days) ─────────────
