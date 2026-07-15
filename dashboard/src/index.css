@@ -4,13 +4,13 @@
 
 /* ─── CSS Variables ──────────────────────────────────── */
 :root {
-  /* Dark theme palette */
-  --bg-primary: #0a0e1a;
-  --bg-secondary: #111827;
-  --bg-card: #1a1f35;
-  --bg-card-hover: #222845;
-  --bg-glass: rgba(26, 31, 53, 0.7);
-  --bg-input: #0f1324;
+  /* Dark theme palette (Translucent to show background) */
+  --bg-primary: transparent;
+  --bg-secondary: rgba(17, 24, 39, 0.4);
+  --bg-card: rgba(26, 31, 53, 0.45);
+  --bg-card-hover: rgba(34, 40, 69, 0.6);
+  --bg-glass: rgba(26, 31, 53, 0.4);
+  --bg-input: rgba(15, 19, 36, 0.6);
 
   /* Accent colors */
   --accent-blue: #3b82f6;
@@ -36,7 +36,7 @@
   --gradient-blue: linear-gradient(135deg, #3b82f6, #8b5cf6);
   --gradient-danger: linear-gradient(135deg, #f43f5e, #e11d48);
   --gradient-success: linear-gradient(135deg, #10b981, #059669);
-  --gradient-card: linear-gradient(145deg, rgba(26, 31, 53, 0.9), rgba(15, 19, 36, 0.9));
+  --gradient-card: linear-gradient(145deg, rgba(26, 31, 53, 0.5), rgba(15, 19, 36, 0.4));
 
   /* Sizing */
   --radius-sm: 8px;
@@ -173,9 +173,11 @@ body {
 .nav-tabs {
   display: flex;
   gap: 4px;
-  background: var(--bg-primary);
+  background: rgba(10, 14, 26, 0.4);
   padding: 4px;
   border-radius: var(--radius-md);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
 }
 
 .nav-tab {
@@ -233,7 +235,9 @@ body {
   background: var(--gradient-card);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  padding: 20px 24px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   position: relative;
   overflow: hidden;
   transition: all 0.3s ease;
@@ -297,6 +301,9 @@ body {
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
   overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .table-header {
