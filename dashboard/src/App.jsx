@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import Grainient from './components/Grainient';
 
 /* ═══════════════════════════════════════════════════════
    Token Management
@@ -546,6 +547,34 @@ export default function App() {
 
   return (
     <div className="app-container">
+      {/* ─── Background Grainient ────────────────────── */}
+      <div style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%', zIndex: -1 }}>
+        <Grainient
+          color1="#000000"
+          color2="#5d41ce"
+          color3="#B497CF"
+          timeSpeed={0.55}
+          colorBalance={-0.47}
+          warpStrength={3.7}
+          warpFrequency={4.5}
+          warpSpeed={3.2}
+          warpAmplitude={74}
+          blendAngle={-28}
+          blendSoftness={0.15}
+          rotationAmount={90}
+          noiseScale={1.65}
+          grainAmount={0.1}
+          grainScale={1.1}
+          grainAnimated={false}
+          contrast={1.5}
+          gamma={0.9}
+          saturation={0.8}
+          centerX={-0.01}
+          centerY={-0.19}
+          zoom={0.95}
+        />
+      </div>
+
       {/* ─── Header ─────────────────────────────────── */}
       <header className="header">
         <div className="header-inner">
