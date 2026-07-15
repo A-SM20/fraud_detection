@@ -20,16 +20,11 @@ services:
         generateValue: true
       - key: API_KEYS
         generateValue: true
-      - key: REDIS_HOST
+      - key: REDIS_URL
         fromService:
           type: redis
           name: fraud-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: fraud-redis
-          property: port
+          property: connectionString
       - key: POSTGRES_HOST
         fromDatabase:
           name: fraud-postgres
@@ -61,16 +56,11 @@ services:
     plan: free
     region: ohio
     envVars:
-      - key: REDIS_HOST
+      - key: REDIS_URL
         fromService:
           type: redis
           name: fraud-redis
-          property: host
-      - key: REDIS_PORT
-        fromService:
-          type: redis
-          name: fraud-redis
-          property: port
+          property: connectionString
       - key: POSTGRES_HOST
         fromDatabase:
           name: fraud-postgres

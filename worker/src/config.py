@@ -11,6 +11,7 @@ load_dotenv(os.path.join(os.path.dirname(__file__), '..', '..', '.env'))
 
 
 # ─── Redis ────────────────────────────────────────────────
+REDIS_URL = os.getenv('REDIS_URL')  # Render provides rediss:// TLS URL
 REDIS_HOST = os.getenv('REDIS_HOST', 'localhost')
 REDIS_PORT = int(os.getenv('REDIS_PORT', '6379'))
 

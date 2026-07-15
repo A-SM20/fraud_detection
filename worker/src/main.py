@@ -15,7 +15,7 @@ import time
 import redis as redis_client
 
 from config import (
-    REDIS_HOST, REDIS_PORT,
+    REDIS_URL, REDIS_HOST, REDIS_PORT,
     QUEUE_PENDING, QUEUE_REVIEW,
     SCORING_THRESHOLD, MODEL_VERSION,
 )
@@ -35,7 +35,16 @@ SCORING_LATENCY = Histogram('fraud_worker_scoring_latency_seconds', 'Latency of 
 
 # ─── Globals ─────────────────────────────────────────────
 _running = True
-_redis = redis_client.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+# ─── Connect to Redis (TLS on Render, plain TCP locally) ─────────────────────
+if REDIS_URL:
+    import ssl
+    _redis = redis_client.from_url(
+        REDIS_URL,
+        decode_responses=True,
+        ssl_cert_reqs=ssl.CERT_NONE,  # Render uses self-signed certs
+    )
+else:
+    _redis = redis_client.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 _scorer = MLScorer()
 _db_conn = None
 
