@@ -571,9 +571,11 @@ export default function App() {
                 Review Queue
                 {flaggedCount > 0 && <span className="badge">{flaggedCount}</span>}
               </button>
-              <button className={`nav-tab ${tab === 'all' ? 'active' : ''}`} onClick={() => setTab('all')}>
-                All Transactions
-              </button>
+              {user?.role === 'admin' && (
+                <button className={`nav-tab ${tab === 'all' ? 'active' : ''}`} onClick={() => setTab('all')}>
+                  All Transactions
+                </button>
+              )}
             </nav>
 
             {user && (
@@ -613,7 +615,7 @@ export default function App() {
           />
         )}
 
-        {tab === 'all' && (
+        {tab === 'all' && user?.role === 'admin' && (
           <AllTransactionsTab
             transactions={transactions}
             totalTxns={totalTxns}
