@@ -88,18 +88,14 @@ app.use(metricsMiddleware);
 // Public — no auth
 app.use('/api/auth', authRouter);
 
-// Transaction ingestion (POST) — API key auth + higher rate limit
-app.post('/api/transactions',
-  ingestLimiter,
-  authenticateApiKey,
-  transactionsRouter
-);
-
-// Transaction reads & reviews (GET, PATCH) — JWT auth for dashboard analysts
-app.get('/api/transactions', authenticateJWT, transactionsRouter);
-app.get('/api/transactions/:id', authenticateJWT, transactionsRouter);
-app.get('/api/transactions/:id/score', authenticateJWT, transactionsRouter);
-app.patch('/api/transactions/:id/review', authenticateJWT, transactionsRouter);
+// Transactions — POST uses API key (machine ingestion), all other methods use JWT (dashboard)
+function transactionAuth(req, res, next) {
+  if (req.method === 'POST') {
+    return authenticateApiKey(req, res, next);
+  }
+  return authenticateJWT(req, res, next);
+}
+app.use('/api/transactions', transactionAuth, transactionsRouter);
 
 // Stats — JWT auth for dashboard
 app.use('/api/stats', authenticateJWT, statsRouter);
