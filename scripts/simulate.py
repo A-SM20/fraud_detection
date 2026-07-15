@@ -100,10 +100,14 @@ def generate_velocity_burst(card_hash, count=8):
     return txns
 
 
-def submit_transaction(txn, api_url):
+def submit_transaction(txn, api_url, api_key=None):
     """Submit a transaction to the API."""
     try:
-        resp = requests.post(api_url, json=txn, timeout=5)
+        headers = {'Content-Type': 'application/json'}
+        if api_key:
+            headers['x-api-key'] = api_key
+            
+        resp = requests.post(api_url, json=txn, headers=headers, timeout=5)
         data = resp.json()
         status = '✓' if resp.status_code == 202 else '✗'
         print(f"  {status} ${txn['amount']:>10,.2f} | {txn['card_hash'][:10]}… | {txn.get('merchant_category', ''):>15} | {data.get('transaction_id', 'error')[:8]}…")
@@ -117,6 +121,7 @@ def main():
     parser = argparse.ArgumentParser(description='Fraud Pipeline Transaction Simulator')
     parser.add_argument('--count', type=int, default=50, help='Number of transactions to generate')
     parser.add_argument('--api-url', type=str, default=API_URL, help='API endpoint URL')
+    parser.add_argument('--api-key', type=str, default=None, help='API key for authentication')
     parser.add_argument('--delay', type=float, default=0.1, help='Delay between transactions (seconds)')
     args = parser.parse_args()
 
@@ -134,18 +139,18 @@ def main():
     print(f"\n── Phase 1: {normal_count} Normal Transactions ──")
     for _ in range(normal_count):
         txn = generate_normal_transaction()
-        if submit_transaction(txn, args.api_url):
+        if submit_transaction(txn, args.api_url, args.api_key):
             success += 1
         else:
             failed += 1
         time.sleep(args.delay)
 
     # Phase 2: High amount (10%)
-    high_count = int(args.count * 0.1)
-    print(f"\n── Phase 2: {high_count} High-Amount Transactions ──")
-    for _ in range(high_count):
+    high_amt_count = int(args.count * 0.1)
+    print(f"\n── Phase 2: {high_amt_count} High-Amount Transactions ──")
+    for _ in range(high_amt_count):
         txn = generate_high_amount_transaction()
-        if submit_transaction(txn, args.api_url):
+        if submit_transaction(txn, args.api_url, args.api_key):
             success += 1
         else:
             failed += 1
@@ -156,7 +161,7 @@ def main():
     print(f"\n── Phase 3: {geo_count} Geo-Mismatch Transactions ──")
     for _ in range(geo_count):
         txn = generate_geo_mismatch_transaction()
-        if submit_transaction(txn, args.api_url):
+        if submit_transaction(txn, args.api_url, args.api_key):
             success += 1
         else:
             failed += 1
@@ -168,7 +173,7 @@ def main():
     burst_card = random.choice(CARDS[:3])
     burst_txns = generate_velocity_burst(burst_card, burst_count)
     for txn in burst_txns:
-        if submit_transaction(txn, args.api_url):
+        if submit_transaction(txn, args.api_url, args.api_key):
             success += 1
         else:
             failed += 1
@@ -179,19 +184,8 @@ def main():
     print(f"  Results: {success} succeeded, {failed} failed ({success + failed} total)")
     print(f"{'=' * 70}")
 
-    # Check scoring results after a brief wait
-    print("\n⏳ Waiting 3s for scoring to complete...")
-    time.sleep(3)
-
-    try:
-        resp = requests.get(args.api_url.replace('/transactions', '/stats'), timeout=5)
-        stats = resp.json()
-        print(f"\n── Pipeline Stats ──")
-        print(f"  Status Counts: {json.dumps(stats.get('status_counts', {}), indent=2)}")
-        print(f"  Fraud Rate:    {stats.get('fraud_rate', 'N/A')}")
-        print(f"  Queue Depths:  Pending={stats['queues']['pending_depth']}, Review={stats['queues']['review_depth']}")
-    except Exception as e:
-        print(f"  Could not fetch stats: {e}")
+    # We don't fetch stats here because the /stats endpoint requires dashboard JWT auth.
+    print(f"\n✅ Simulation complete! Check your dashboard to view the incoming transactions.")
 
 
 if __name__ == '__main__':
