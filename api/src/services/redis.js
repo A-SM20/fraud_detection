@@ -1,30 +1,35 @@
 const Redis = require('ioredis');
 
-// Render provides REDIS_URL in rediss:// format (TLS).
+// Render provides REDIS_URL as an internal redis:// URL (plain TCP within same region).
 // Fall back to host/port for local Docker dev.
-let redis;
+let redisConfig;
 
 if (process.env.REDIS_URL) {
-  redis = new Redis(process.env.REDIS_URL, {
+  const url = process.env.REDIS_URL;
+  const isTls = url.startsWith('rediss://');
+  redisConfig = {
+    ...(isTls ? { tls: { rejectUnauthorized: false } } : {}),
     maxRetriesPerRequest: 3,
-    tls: { rejectUnauthorized: false }, // Required for Render's self-signed Redis cert
+    commandTimeout: 5000,
     retryStrategy(times) {
-      const delay = Math.min(times * 200, 2000);
-      return delay;
+      if (times > 5) return null; // Stop retrying after 5 attempts
+      return Math.min(times * 500, 3000);
     },
-    commandTimeout: 5000, // 5s timeout per command — prevent hanging
-  });
+  };
+  // ioredis can parse a Redis URL directly
+  var redis = new Redis(url, redisConfig);
 } else {
-  redis = new Redis({
+  redisConfig = {
     host: process.env.REDIS_HOST || 'localhost',
     port: parseInt(process.env.REDIS_PORT || '6379', 10),
     maxRetriesPerRequest: 3,
     commandTimeout: 5000,
     retryStrategy(times) {
-      const delay = Math.min(times * 200, 2000);
-      return delay;
+      if (times > 5) return null;
+      return Math.min(times * 500, 3000);
     },
-  });
+  };
+  var redis = new Redis(redisConfig);
 }
 
 redis.on('connect', () => {
@@ -49,7 +54,7 @@ async function enqueuePending(transaction) {
 }
 
 /**
- * Get current pending queue depth. Returns 0 on error.
+ * Get current pending queue depth. Returns 0 on error so the app never crashes.
  */
 async function getPendingDepth() {
   try {
