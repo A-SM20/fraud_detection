@@ -2,7 +2,7 @@
 
 A production-grade fraud detection system that scores transactions in real-time using a **rules engine** + **ML ensemble** (Isolation Forest + Logistic Regression), with a review dashboard for analyst triage.
 
-[![CI/CD](https://github.com/your-username/fraud-detection/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/fraud-detection/actions)
+[![CI/CD](https://github.com/A-SM20/fraud-detection/actions/workflows/ci.yml/badge.svg)](https://github.com/A-SM20/fraud-detection/actions)
 
 ## Live Demo
 - **Dashboard (Frontend):** [https://fraud-detection-green.vercel.app/](https://fraud-detection-green.vercel.app/)
