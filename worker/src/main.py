@@ -35,14 +35,10 @@ SCORING_LATENCY = Histogram('fraud_worker_scoring_latency_seconds', 'Latency of 
 
 # ─── Globals ─────────────────────────────────────────────
 _running = True
-# ─── Connect to Redis (TLS on Render, plain TCP locally) ─────────────────────
+# ─── Connect to Redis ───────────────────────────────────────────────
 if REDIS_URL:
-    import ssl
-    _redis = redis_client.from_url(
-        REDIS_URL,
-        decode_responses=True,
-        ssl_cert_reqs=ssl.CERT_NONE,  # Render uses self-signed certs
-    )
+    # Render internal Redis URL is redis:// (plain TCP, no TLS needed internally)
+    _redis = redis_client.from_url(REDIS_URL, decode_responses=True)
 else:
     _redis = redis_client.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
 _scorer = MLScorer()
@@ -256,7 +252,7 @@ def main():
 
         except redis_client.ConnectionError as e:
             log_error('redis_connection_error', error=str(e))
-            time.sleep(5)
+            time.sleep(30)  # Long backoff to avoid flooding Redis free tier
 
         except KeyboardInterrupt:
             log_info('interrupted_by_user')
@@ -265,7 +261,7 @@ def main():
         except Exception as e:
             log_error('unexpected_error', error=str(e))
             _stats['total_errors'] += 1
-            time.sleep(1)
+            time.sleep(10)  # Back off on unknown errors too
 
     # Final stats
     log_stats()
