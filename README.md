@@ -4,6 +4,14 @@ A production-grade fraud detection system that scores transactions in real-time 
 
 [![CI/CD](https://github.com/your-username/fraud-detection/actions/workflows/ci.yml/badge.svg)](https://github.com/your-username/fraud-detection/actions)
 
+## Live Demo
+- **Dashboard (Frontend):** [https://fraud-detection-green.vercel.app/](https://fraud-detection-green.vercel.app/)
+- **API (Backend):** `https://fraud-api-bj95.onrender.com`
+
+*Log in as:*
+- **Admin** (Full Access): `admin` / `adminpass`
+- **Analyst** (Restricted View): `analyst_1` / `password123`
+
 ## Architecture
 
 ```
@@ -11,7 +19,7 @@ Client → Express API (ingest) → Redis Queue → Python Worker (scoring) → 
                 ↑                                    ↓
           API Key Auth                         Flagged? → Review Queue → Dashboard → Analyst
                                                                             ↑
-                                                                        JWT Auth
+                                                                        JWT & RBAC
 ```
 
 | Component | Technology | Port |
@@ -90,7 +98,9 @@ curl http://localhost:3000/api/stats \
   -H "Authorization: Bearer <token>"
 ```
 
-Default users: `analyst_1`/`password123`, `analyst_2`/`password123`, `admin`/`adminpass`
+Default users: 
+- `admin`/`adminpass` (Role: Admin - Can view 'All Transactions' and Review Queue)
+- `analyst_1`/`password123` (Role: Analyst - Restricted to Review Queue only)
 
 > **Dev mode**: Set `SKIP_AUTH=true` in `.env` to bypass all authentication.
 
@@ -201,6 +211,12 @@ export CORS_ORIGIN=https://your-dashboard-domain.com
 ├── docker-compose.yml          # Development orchestration
 └── docker-compose.prod.yml     # Production overlay
 ```
+
+## Recent Updates
+- **Deployment**: Successfully deployed API and Worker to Render, and Dashboard to Vercel. 
+- **Resilience**: Implemented robust Redis connection handling in the Python Worker with backoff strategies to prevent socket timeout floods on Render's free tier.
+- **RBAC**: Implemented Role-Based Access Control on the dashboard, hiding sensitive views from non-admin users.
+- **UI/UX**: Integrated a custom WebGL animated gradient background (`Grainient`) for a premium dashboard aesthetic.
 
 ## License
 
