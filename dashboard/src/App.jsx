@@ -479,13 +479,15 @@ export default function App() {
     setTimeout(() => setToasts(t => t.filter(x => x.id !== id)), 3500);
   }, []);
 
-  // Fetch stats
+  // Fetch stats — also used as the online indicator
   const loadStats = useCallback(async () => {
     try {
       const data = await fetchJSON('/stats');
       setStats(data);
+      setHealthy(true); // If stats load, API is reachable
     } catch {
       setStats(null);
+      setHealthy(false);
     }
   }, []);
 
@@ -515,20 +517,18 @@ export default function App() {
     }
   }, []);
 
-  // Initial load + polling
+  // Initial load + polling every 10s (reduced from 5s to lower Redis pressure)
   useEffect(() => {
     if (!getToken()) return;
     loadStats();
     loadTransactions();
-    checkHealth();
     const interval = setInterval(() => {
       if (!getToken()) return;
       loadStats();
       loadTransactions();
-      checkHealth();
-    }, 5000);
+    }, 10000);
     return () => clearInterval(interval);
-  }, [loadStats, loadTransactions, checkHealth]);
+  }, [loadStats, loadTransactions]);
 
   // Reload when filters change
   useEffect(() => {

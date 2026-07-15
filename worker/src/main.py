@@ -38,9 +38,23 @@ _running = True
 # ─── Connect to Redis ───────────────────────────────────────────────
 if REDIS_URL:
     # Render internal Redis URL is redis:// (plain TCP, no TLS needed internally)
-    _redis = redis_client.from_url(REDIS_URL, decode_responses=True)
+    _redis = redis_client.from_url(
+        REDIS_URL,
+        decode_responses=True,
+        socket_keepalive=True,
+        socket_timeout=30,
+        socket_connect_timeout=10,
+        retry_on_timeout=True,
+    )
 else:
-    _redis = redis_client.Redis(host=REDIS_HOST, port=REDIS_PORT, decode_responses=True)
+    _redis = redis_client.Redis(
+        host=REDIS_HOST, port=REDIS_PORT,
+        decode_responses=True,
+        socket_keepalive=True,
+        socket_timeout=30,
+        socket_connect_timeout=10,
+        retry_on_timeout=True,
+    )
 _scorer = MLScorer()
 _db_conn = None
 
@@ -249,6 +263,10 @@ def main():
             # Log stats every 100 transactions
             if _stats['total_scored'] % 100 == 0 and _stats['total_scored'] > 0:
                 log_stats()
+
+        except (redis_client.TimeoutError, TimeoutError):
+            # BRPOP socket timeout is expected on idle connections — just retry
+            continue
 
         except redis_client.ConnectionError as e:
             log_error('redis_connection_error', error=str(e))
