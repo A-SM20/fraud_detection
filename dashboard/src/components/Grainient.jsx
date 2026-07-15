@@ -279,7 +279,7 @@ const Grainient = ({
   ]);
 
 
-  return <div ref={containerRef} className={\`grainient-container \${className}\`.trim()} />;
+  return <div ref={containerRef} className={`grainient-container ${className}`.trim()} />;
 };
 
 export default Grainient;
