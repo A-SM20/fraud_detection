@@ -23,6 +23,9 @@ const { authenticateApiKey, authenticateJWT } = require('./middleware/auth');
 const app = express();
 const PORT = parseInt(process.env.API_PORT || '3000', 10);
 
+// Trust Render's reverse proxy (required for express-rate-limit + correct req.ip)
+app.set('trust proxy', 1);
+
 // ─── Security Middleware ─────────────────────────────────
 app.use(helmet({
   contentSecurityPolicy: false, // Dashboard serves its own CSP
@@ -85,12 +88,18 @@ app.use(metricsMiddleware);
 // Public — no auth
 app.use('/api/auth', authRouter);
 
-// Transaction ingestion — API key auth + higher rate limit
-app.use('/api/transactions',
+// Transaction ingestion (POST) — API key auth + higher rate limit
+app.post('/api/transactions',
   ingestLimiter,
   authenticateApiKey,
   transactionsRouter
 );
+
+// Transaction reads & reviews (GET, PATCH) — JWT auth for dashboard analysts
+app.get('/api/transactions', authenticateJWT, transactionsRouter);
+app.get('/api/transactions/:id', authenticateJWT, transactionsRouter);
+app.get('/api/transactions/:id/score', authenticateJWT, transactionsRouter);
+app.patch('/api/transactions/:id/review', authenticateJWT, transactionsRouter);
 
 // Stats — JWT auth for dashboard
 app.use('/api/stats', authenticateJWT, statsRouter);

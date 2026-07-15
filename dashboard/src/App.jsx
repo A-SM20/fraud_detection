@@ -507,8 +507,9 @@ export default function App() {
   // Health check
   const checkHealth = useCallback(async () => {
     try {
-      await fetchJSON('/health');
-      setHealthy(true);
+      const healthUrl = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL}/health` : '/health';
+      const res = await fetch(healthUrl);
+      setHealthy(res.ok);
     } catch {
       setHealthy(false);
     }
